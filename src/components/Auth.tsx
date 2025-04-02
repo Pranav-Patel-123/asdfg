@@ -9,7 +9,8 @@ import {
   signInWithPopup, 
   signOut, 
   createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword 
+  signInWithEmailAndPassword,
+  User
 } from "firebase/auth";
 import { 
   collection, 
@@ -20,8 +21,18 @@ import {
   doc 
 } from "firebase/firestore";
 
+// Define a type for user data stored in Firestore
+interface FirestoreUser {
+  id: string;
+  name: string;
+  age: number | string;
+  email: string;
+  phone: string;
+  address: string;
+}
+
 export default function Auth() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   // Form State for Firestore user data
   const [name, setName] = useState("");
@@ -36,7 +47,7 @@ export default function Auth() {
   const [authPassword, setAuthPassword] = useState("");
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<FirestoreUser[]>([]);
 
   // Fetch Users on Login
   useEffect(() => {
@@ -108,7 +119,10 @@ export default function Auth() {
   const fetchUsers = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "users"));
-      const usersList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const usersList: FirestoreUser[] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      })) as FirestoreUser[];
       setUsers(usersList);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -288,23 +302,23 @@ export default function Auth() {
             {/* User List */}
             <h3 className="text-2xl font-semibold text-white">User List</h3>
             <div className="space-y-6">
-              {users.map((user) => (
+              {users.map((firestoreUser) => (
                 <div
-                  key={user.id}
+                  key={firestoreUser.id}
                   className="flex flex-col gap-4 p-6 bg-gray-700 rounded-lg"
                 >
                   <span className="text-white text-lg">
-                    {user.name} (Age: {user.age}) | Email: {user.email} | Phone: {user.phone} | Address: {user.address}
+                    {firestoreUser.name} (Age: {firestoreUser.age}) | Email: {firestoreUser.email} | Phone: {firestoreUser.phone} | Address: {firestoreUser.address}
                   </span>
                   <div className="flex gap-4">
                     <button
-                      onClick={() => updateUser(user.id)}
+                      onClick={() => updateUser(firestoreUser.id)}
                       className="p-3 bg-yellow-500 hover:bg-yellow-600 rounded-lg transition duration-300"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => deleteUser(user.id)}
+                      onClick={() => deleteUser(firestoreUser.id)}
                       className="p-3 bg-red-600 hover:bg-red-700 rounded-lg transition duration-300"
                     >
                       Delete
